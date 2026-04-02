@@ -3,11 +3,31 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --verde-principal: #16a34a;
+  --verde-escuro: #15803d;
+  --verde-claro: #dcfce7;
+  --verde-medio: #22c55e;
+  --branco: #ffffff;
+  --cinza-claro: #f3f4f6;
+  --cinza-medio: #6b7280;
+  --cinza-escuro: #374151;
+  --vermelho: #dc2626;
+  --amarelo: #fbbf24;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-verde-principal: var(--verde-principal);
+  --color-verde-escuro: var(--verde-escuro);
+  --color-verde-claro: var(--verde-claro);
+  --color-verde-medio: var(--verde-medio);
+  --color-branco: var(--branco);
+  --color-cinza-claro: var(--cinza-claro);
+  --color-cinza-medio: var(--cinza-medio);
+  --color-cinza-escuro: var(--cinza-escuro);
+  --color-vermelho: var(--vermelho);
+  --color-amarelo: var(--amarelo);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -23,4 +43,95 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Melhorar visibilidade de inputs */
+input, select, textarea {
+  color: #1f2937 !important;
+  font-weight: 500;
+}
+
+input::placeholder, 
+textarea::placeholder {
+  color: #9ca3af !important;
+  font-weight: 400;
+  opacity: 1;
+}
+
+/* Melhorar visibilidade de labels */
+label {
+  color: #374151;
+  font-weight: 600;
+}
+
+/* Melhorar visibilidade de textos em tabelas */
+table td, table th {
+  color: #1f2937;
+}
+
+/* Melhorar contraste de textos cinza */
+.text-cinza-medio {
+  color: #4b5563 !important;
+}
+
+/* Foco em inputs mais visível */
+input:focus, select:focus, textarea:focus {
+  border-color: var(--verde-principal) !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2) !important;
+}
+
+/* Melhorar visibilidade de botões de quantidade no carrinho */
+button[class*="bg-cinza-claro"] {
+  background-color: #e5e7eb !important;
+  color: #1f2937 !important;
+  font-weight: 600;
+}
+
+button[class*="bg-cinza-claro"]:hover {
+  background-color: #d1d5db !important;
+}
+
+/* Melhorar visibilidade do número de quantidade */
+.w-8 {
+  color: #1f2937 !important;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* Melhorar visibilidade de texto no carrinho */
+.bg-cinza-claro\/50 {
+  color: #1f2937;
+}
+
+.bg-cinza-claro\/50 .font-medium {
+  color: #111827 !important;
+  font-weight: 600;
+}
+
+.bg-cinza-claro\/50 .font-bold {
+  color: #16a34a !important;
+  font-weight: 700;
+}
+
+/* Melhorar visibilidade do subtotal no carrinho */
+.border-t.border-cinza-claro .text-cinza-medio,
+.border-t.border-cinza-claro span.text-cinza-medio {
+  color: #374151 !important;
+  font-weight: 600;
+}
+
+.border-t.border-cinza-claro .font-medium {
+  color: #1f2937 !important;
+  font-weight: 700;
+}
+
+/* Melhorar visibilidade do TOTAL */
+.border-t.border-cinza-claro .text-lg.font-bold {
+  color: #111827 !important;
+  font-weight: 800;
+}
+
+/* Forçar ícone da sidebar a ficar branco */
+aside .w-8 {
+  color: #ffffff !important;
 }
