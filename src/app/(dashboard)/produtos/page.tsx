@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/toast/ToastContext'
+import { Html5Qrcode } from 'html5-qrcode'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Plus, Search, Edit2, Trash2, Package, ChevronLeft, ChevronRight, Camera, X } from 'lucide-react'
 
@@ -36,9 +37,8 @@ export default function ProdutosPage() {
   // Scanner de código de barras
   const [showScanner, setShowScanner] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null)
+  const scannerContainerRef = useRef<HTMLDivElement>(null)
 
   const supabase = createClient()
   const { showToast } = useToast()
@@ -195,20 +195,31 @@ export default function ProdutosPage() {
       setIsScanning(true)
       setShowScanner(true)
 
-      // Aguardar o modal abrir e o video element estar disponível
+      // Aguardar o modal abrir
       setTimeout(async () => {
-        if (!videoRef.current) return
+        if (!scannerContainerRef.current) return
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }
-        })
+        const scannerId = 'barcode-scanner'
+        scannerContainerRef.current.id = scannerId
 
-        streamRef.current = stream
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
+        html5QrCodeRef.current = new Html5Qrcode(scannerId)
 
-        // Iniciar detecção de código de barras
-        detectarCodigoBarras()
+        await html5QrCodeRef.current.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+          },
+          (decodedText) => {
+            // Código detectado
+            setFormData(prev => ({ ...prev, codigo_barras: decodedText }))
+            showToast(`Código detectado: ${decodedText}`, 'success')
+            pararScanner()
+          },
+          (errorMessage) => {
+            // Erros silenciosos durante scanning
+          }
+        )
       }, 300)
     } catch (err) {
       showToast('Erro ao acessar câmera', 'error')
@@ -217,59 +228,18 @@ export default function ProdutosPage() {
     }
   }
 
-  const pararScanner = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
-      streamRef.current = null
+  const pararScanner = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        await html5QrCodeRef.current.stop()
+        await html5QrCodeRef.current.clear()
+      } catch (err) {
+        console.error('Erro ao parar scanner:', err)
+      }
+      html5QrCodeRef.current = null
     }
     setIsScanning(false)
     setShowScanner(false)
-  }
-
-  const detectarCodigoBarras = async () => {
-    if (!videoRef.current || !canvasRef.current) return
-
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // Verificar se o BarcodeDetector está disponível
-    if ('BarcodeDetector' in window) {
-      // @ts-ignore - BarcodeDetector API pode não estar nos tipos
-      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39'] })
-
-      const scanFrame = async () => {
-        if (!isScanning) return
-
-        try {
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-          // @ts-ignore
-          const barcodes = await detector.detect(canvas)
-
-          if (barcodes.length > 0) {
-            const codigo = barcodes[0].rawValue
-            setFormData(prev => ({ ...prev, codigo_barras: codigo }))
-            showToast(`Código detectado: ${codigo}`, 'success')
-            pararScanner()
-            return
-          }
-        } catch (err) {
-          // Silenciar erros de detecção
-        }
-
-        // Continuar escaneando
-        requestAnimationFrame(scanFrame)
-      }
-
-      scanFrame()
-    } else {
-      showToast('Scanner não suportado neste dispositivo', 'error')
-      pararScanner()
-    }
   }
 
   // Lista de categorias fixas para o select do formulário
@@ -603,35 +573,15 @@ export default function ProdutosPage() {
               </button>
             </div>
 
-            <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                playsInline
-                muted
-              />
-              <canvas
-                ref={canvasRef}
-                className="hidden"
-              />
-              
-              {/* Overlay de scanning */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-48 h-32 border-2 border-verde-principal rounded-lg relative">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-16 h-0.5 bg-verde-principal" />
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 w-16 h-0.5 bg-verde-principal" />
-                </div>
-              </div>
-
-              {isScanning && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-verde-principal text-branco px-3 py-1 rounded-full text-sm">
-                  Escaneando...
-                </div>
-              )}
+            <div 
+              ref={scannerContainerRef}
+              className="relative bg-black rounded-lg overflow-hidden aspect-video"
+            >
+              {/* O scanner será injetado aqui pelo html5-qrcode */}
             </div>
 
             <p className="text-sm text-cinza-medio mt-4 text-center">
-              Posicione o código de barras dentro da área verde
+              Posicione o código de barras dentro da área de scan
             </p>
 
             <div className="flex gap-3 mt-4">
